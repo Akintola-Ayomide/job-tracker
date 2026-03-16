@@ -1,62 +1,62 @@
 import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-    ManyToOne,
-    JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 export enum ApplicationStatus {
-    APPLIED = 'applied',
-    INTERVIEW = 'interview',
-    OFFER = 'offer',
-    REJECTED = 'rejected',
-    ACCEPTED = 'accepted',
+  APPLIED = 'applied',
+  INTERVIEW = 'interview',
+  OFFER = 'offer',
+  REJECTED = 'rejected',
+  ACCEPTED = 'accepted',
 }
 
 @Entity('job_applications')
 export class JobApplication {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    company: string;
+  @Column()
+  company: string;
 
-    @Column()
-    role: string;
+  @Column()
+  role: string;
 
-    @Column({
-        type: 'enum',
-        enum: ApplicationStatus,
-        default: ApplicationStatus.APPLIED,
-    })
-    status: ApplicationStatus;
+  @Column({
+    type: 'enum',
+    enum: ApplicationStatus,
+    default: ApplicationStatus.APPLIED,
+  })
+  status: ApplicationStatus;
 
-    @Column({ type: 'timestamp' })
-    dateApplied: Date;
+  @Column({ type: 'timestamp' })
+  dateApplied: Date;
 
-    @Column({ type: 'text', nullable: true })
-    notes: string;
+  @Column({ type: 'text', nullable: true })
+  notes: string;
 
-    @Column({ nullable: true })
-    salary: string;
+  @Column({ nullable: true })
+  salary: string;
 
-    @Column({ nullable: true })
-    location: string;
+  @Column({ nullable: true })
+  location: string;
 
-    @Column()
-    userId: string;
+  @Column()
+  userId: string;
 
-    @ManyToOne(() => User, (user) => user.applications, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
-    user: User;
+  @ManyToOne(() => User, (user) => user.applications, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

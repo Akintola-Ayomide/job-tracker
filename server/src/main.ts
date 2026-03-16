@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,9 @@ async function bootstrap() {
     origin: configService.get<string>('FRONTEND_URL'),
     credentials: true,
   });
+
+  // Security headers
+  app.use(helmet());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -29,4 +33,7 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 Server is running on: http://localhost:${port}`);
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

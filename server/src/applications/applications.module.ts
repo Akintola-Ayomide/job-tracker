@@ -5,9 +5,9 @@ import { ApplicationsController } from './applications.controller';
 import { JobApplication } from './entities/job-application.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([JobApplication])],
-    controllers: [ApplicationsController],
-    providers: [ApplicationsService],
-    exports: [ApplicationsService],
+  imports: [TypeOrmModule.forFeature([JobApplication])],
+  controllers: [ApplicationsController],
+  providers: [ApplicationsService],
+  exports: [ApplicationsService],
 })
-export class ApplicationsModule { }
+export class ApplicationsModule {}
