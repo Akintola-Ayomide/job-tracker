@@ -11,12 +11,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Mail, Lock, ExternalLink } from "lucide-react"
 import { authApi } from "@/lib/api/auth"
 
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(1, "Password is required"),
+    rememberMe: z.boolean().optional().default(false),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -29,9 +31,14 @@ export default function LoginPage() {
     const {
         register,
         handleSubmit,
+        watch,
+        setValue,
         formState: { errors },
     } = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),
+        defaultValues: {
+            rememberMe: false,
+        },
     })
 
     const onSubmit = async (data: LoginForm) => {
@@ -109,6 +116,21 @@ export default function LoginPage() {
                         {errors.password && (
                             <p className="text-sm text-destructive">{errors.password.message}</p>
                         )}
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="rememberMe"
+                            checked={watch("rememberMe")}
+                            onCheckedChange={(checked) => setValue("rememberMe", checked as boolean)}
+                            disabled={isLoading}
+                        />
+                        <Label
+                            htmlFor="rememberMe"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Remember me
+                        </Label>
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isLoading}>

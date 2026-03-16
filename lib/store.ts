@@ -12,7 +12,7 @@ interface AuthState {
   // Auth actions
   setUser: (user: User | null) => void
   fetchCurrentUser: () => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   clearError: () => void
 }
 
@@ -52,11 +52,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setUser: (user) => set({ user, isAuthenticated: !!user }),
 
   fetchCurrentUser: async () => {
-    if (!authApi.isAuthenticated()) {
-      set({ user: null, isAuthenticated: false })
-      return
-    }
-
     try {
       set({ isLoading: true, error: null })
       const user = await authApi.getCurrentUser()
@@ -67,14 +62,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  logout: () => {
-    authApi.logout()
-    set({
-      user: null,
-      isAuthenticated: false,
-      applications: [],
-      statistics: null,
-    })
+  logout: async () => {
+    try {
+      await authApi.logout()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      set({
+        user: null,
+        isAuthenticated: false,
+        applications: [],
+        statistics: null,
+      })
+    }
   },
 
   // Applications actions

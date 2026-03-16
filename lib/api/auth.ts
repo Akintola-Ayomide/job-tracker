@@ -22,6 +22,7 @@ export interface RegisterData {
 export interface LoginData {
     email: string;
     password: string;
+    rememberMe?: boolean;
 }
 
 export const authApi = {
@@ -30,10 +31,6 @@ export const authApi = {
      */
     register: async (data: RegisterData): Promise<AuthResponse> => {
         const response = await apiClient.post<AuthResponse>('/auth/register', data);
-        // Store token
-        if (response.data.access_token) {
-            tokenManager.setToken(response.data.access_token);
-        }
         return response.data;
     },
 
@@ -42,10 +39,6 @@ export const authApi = {
      */
     login: async (data: LoginData): Promise<AuthResponse> => {
         const response = await apiClient.post<AuthResponse>('/auth/login', data);
-        // Store token
-        if (response.data.access_token) {
-            tokenManager.setToken(response.data.access_token);
-        }
         return response.data;
     },
 
@@ -60,8 +53,8 @@ export const authApi = {
     /**
      * Logout - clear token
      */
-    logout: (): void => {
-        tokenManager.removeToken();
+    logout: async (): Promise<void> => {
+        await apiClient.post('/auth/logout');
     },
 
     /**

@@ -38,6 +38,10 @@ export class User {
   @Exclude()
   resetPasswordExpires: Date | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  @Exclude()
+  refreshToken: string | null;
+
   @OneToMany(() => JobApplication, (application) => application.user)
   applications: JobApplication[];
 

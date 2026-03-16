@@ -69,12 +69,10 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    // Generate JWT token
-    const payload = { sub: user.id, email: user.email };
-    const access_token = this.jwtService.sign(payload);
+    const tokens = await this.generateTokens(user, false);
 
     return {
-      access_token,
+      ...tokens,
       user: {
         id: user.id,
         email: user.email,
@@ -107,12 +105,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate JWT token
-    const payload = { sub: user.id, email: user.email };
-    const access_token = this.jwtService.sign(payload);
+    const tokens = await this.generateTokens(user, loginDto.rememberMe);
 
     return {
-      access_token,
+      ...tokens,
       user: {
         id: user.id,
         email: user.email,
@@ -149,12 +145,10 @@ export class AuthService {
       await this.userRepository.save(user);
     }
 
-    // Generate JWT token
-    const payload = { sub: user.id, email: user.email };
-    const access_token = this.jwtService.sign(payload);
+    const tokens = await this.generateTokens(user, true);
 
     return {
-      access_token,
+      ...tokens,
       user: {
         id: user.id,
         email: user.email,
@@ -248,5 +242,78 @@ export class AuthService {
 
   async validateUser(userId: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id: userId } });
+  }
+
+  async generateTokens(user: User, rememberMe: boolean = false) {
+    const payload = { sub: user.id, email: user.email };
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is not defined in environment variables');
+    }
+
+    // access token expires in 15 mins for tighter security
+    const access_token = this.jwtService.sign(payload, {
+      secret: jwtSecret,
+      expiresIn: '15m',
+    });
+
+    const refreshSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET') || jwtSecret;
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: refreshSecret,
+      expiresIn: rememberMe ? '30d' : '7d',
+    });
+
+    const hashedRefreshToken = await bcrypt.hash(refresh_token, 10);
+    user.refreshToken = hashedRefreshToken;
+    await this.userRepository.save(user);
+
+    return {
+      access_token,
+      refresh_token,
+    };
+  }
+
+  async refreshTokens(refreshToken: string) {
+    try {
+      const jwtSecret = this.configService.get<string>('JWT_SECRET');
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET is not defined in environment variables');
+      }
+      const refreshSecret =
+        this.configService.get<string>('JWT_REFRESH_SECRET') || jwtSecret;
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: refreshSecret,
+      });
+
+      const user = await this.userRepository.findOne({
+        where: { id: payload.sub },
+      });
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('Access Denied');
+      }
+
+      const refreshTokenMatches = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
+      if (!refreshTokenMatches) {
+        throw new UnauthorizedException('Access Denied');
+      }
+
+      // If they had a long-lived refresh token, preserve `rememberMe` status roughly by issuing a new 30d one?
+      // For simplicity, we can default to 7d, assuming user should log in again after a week if they didn't explicitly rememberMe on fresh login
+      return await this.generateTokens(user, false);
+    } catch (e) {
+      throw new UnauthorizedException('Invalid Refresh Token');
+    }
+  }
+
+  async logout(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (user) {
+      user.refreshToken = null;
+      await this.userRepository.save(user);
+    }
   }
 }
