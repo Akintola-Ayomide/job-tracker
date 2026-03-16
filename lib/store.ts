@@ -28,6 +28,7 @@ interface ApplicationsState {
   addApplication: (app: Omit<JobApplication, "id">) => Promise<void>
   updateApplication: (id: string, updates: Partial<JobApplication>) => Promise<void>
   deleteApplication: (id: string) => Promise<void>
+  getStatistics: () => Statistics
   clearError: () => void
 
   // Legacy methods for backwards compatibility
